@@ -4,108 +4,212 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>孔明神數解籤系統</title>
-    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap');
-        
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;700&display=swap');
+
+        /* 全域重置與基礎變數 */
+        :root {
+            --stone-50: #fafaf9; --stone-100: #f5f5f4; --stone-200: #e7e5e4;
+            --stone-300: #d6d3d1; --stone-400: #a8a29e; --stone-500: #78716c;
+            --stone-600: #57534e; --stone-700: #44403c; --stone-800: #292524;
+            
+            --red-50: #fef2f2; --red-100: #fee2e2; --red-300: #fca5a5;
+            --red-400: #f87171; --red-500: #ef4444; --red-600: #dc2626;
+            --red-800: #991b1b; --red-900: #7f1d1d;
+            
+            --amber-50: #fffbeb; --amber-400: #fbbf24; --amber-600: #d97706;
+            
+            --indigo-50: #eef2ff; --indigo-100: #e0e7ff; --indigo-200: #c7d2fe;
+            --indigo-500: #6366f1; --indigo-600: #4f46e5; --indigo-800: #3730a3; --indigo-900: #312e81;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
             font-family: 'Noto Serif TC', serif;
             background-color: #ffffff;
             background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
             background-size: 20px 20px;
-        }
-        
-        .card-shadow {
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        }
-        
-        /* 自訂捲軸樣式 */
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 6px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #d1d5db;
-            border-radius: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: #9ca3af;
+            color: var(--stone-800);
+            line-height: 1.5;
         }
 
-        /* 閃爍動畫 for AI Icon */
+        /* 佈局 */
+        .container { max-width: 72rem; margin: 0 auto; padding: 0 1rem; padding-bottom: 3rem; min-height: 100vh; }
+        .header { text-align: center; padding: 2rem 0; margin-bottom: 2rem; border-bottom: 2px solid var(--stone-200); }
+        .header h1 { font-size: 2.25rem; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+        .header p { color: var(--stone-500); }
+        
+        .main-grid { display: grid; grid-template-columns: 1fr; gap: 2rem; align-items: start; }
+        @media (min-width: 1024px) { .main-grid { grid-template-columns: 2fr 1fr; } }
+        
+        .left-col { display: flex; flex-direction: column; gap: 2rem; }
+        
+        /* 卡片共用 */
+        .card { background: white; border-radius: 0.75rem; border: 1px solid var(--stone-100); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06); }
+        .card-p { padding: 1.5rem; }
+        .card-title { font-size: 1.25rem; font-weight: 700; color: var(--stone-700); margin-bottom: 1rem; display: flex; align-items: center; }
+        .step-badge { background: var(--red-800); color: white; width: 2rem; height: 2rem; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.875rem; margin-right: 0.5rem; }
+        
+        /* 表單區塊 */
+        .form-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1rem; }
+        @media (min-width: 768px) { .form-grid { grid-template-columns: 1fr 1fr; } }
+        .form-group label { display: block; font-weight: 500; color: var(--stone-600); margin-bottom: 0.25rem; }
+        .form-input { width: 100%; padding: 0.75rem; font-size: 1.125rem; border: 1px solid var(--stone-300); border-radius: 0.5rem; outline: none; transition: border-color 0.2s, box-shadow 0.2s; font-family: inherit; }
+        .form-input:focus { border-color: var(--red-800); box-shadow: 0 0 0 2px rgba(153,27,27,0.2); }
+        .form-hint { font-size: 0.75rem; color: var(--stone-400); margin-top: 0.25rem; }
+        
+        .btn-submit { width: 100%; background: var(--red-800); color: white; font-weight: 700; font-size: 1.125rem; padding: 0.75rem; border: none; border-radius: 0.5rem; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: background 0.2s; font-family: inherit; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .btn-submit:hover { background: var(--red-900); }
+        .btn-submit svg { width: 1.25rem; height: 1.25rem; margin-right: 0.5rem; }
+        
+        .error-msg { background: var(--red-50); color: var(--red-600); padding: 0.75rem; border-radius: 0.5rem; font-size: 0.875rem; display: none; align-items: center; margin-bottom: 1rem; }
+        .error-msg svg { width: 1rem; height: 1rem; margin-right: 0.5rem; }
+
+        /* 結果顯示區塊 */
+        #result-section { display: none; overflow: hidden; border-color: var(--red-100); }
+        .result-header { background: var(--red-50); padding: 1rem; border-bottom: 1px solid var(--red-100); display: flex; justify-content: space-between; align-items: center; }
+        .result-header h2 { font-size: 1.25rem; font-weight: 700; color: var(--red-900); display: flex; align-items: center; }
+        .result-meta { text-align: right; font-size: 0.875rem; color: var(--red-800); opacity: 0.7; }
+        .result-meta-bold { font-weight: 700; }
+        
+        .result-body { padding: 1.5rem; }
+        @media (min-width: 768px) { .result-body { padding: 2rem; } }
+        
+        .poem-title-area { text-align: center; margin-bottom: 1.5rem; }
+        .poem-no { display: inline-block; background: var(--stone-800); color: var(--amber-400); padding: 0.25rem 1rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 700; letter-spacing: 0.1em; margin-bottom: 0.5rem; }
+        .poem-title { font-size: 1.875rem; font-weight: 700; color: var(--stone-800); }
+        
+        .content-box { padding: 1.25rem; border-radius: 0.5rem; border-left: 4px solid; margin-bottom: 1.5rem; }
+        .box-title { font-size: 0.875rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+        
+        .box-poem { background: var(--stone-50); border-left-color: var(--stone-400); }
+        .box-poem .box-title { color: var(--stone-500); }
+        .box-poem p { font-size: 1.25rem; color: var(--stone-800); line-height: 2; font-weight: 500; }
+        
+        .box-explain { background: var(--red-50); border-left-color: var(--red-400); }
+        .box-explain .box-title { color: var(--red-500); }
+        .box-explain p { font-size: 1.125rem; color: var(--stone-800); }
+        
+        .box-deduce { background: var(--amber-50); border-left-color: var(--amber-400); }
+        .box-deduce .box-title { color: var(--amber-600); }
+        .box-deduce p { font-size: 1.125rem; color: var(--stone-800); }
+        
+        /* AI 詳解區塊 */
+        .ai-box { background: linear-gradient(to right, var(--indigo-50), #eff6ff); padding: 1.5rem; border-radius: 0.5rem; border: 1px solid var(--indigo-200); position: relative; overflow: hidden; margin-bottom: 1.5rem; }
+        .ai-bg-icon { position: absolute; top: -0.5rem; right: -0.5rem; opacity: 0.1; color: var(--indigo-500); width: 100px; height: 100px; }
+        .ai-title { display: flex; align-items: center; margin-bottom: 0.75rem; position: relative; z-index: 1; }
+        .ai-icon-wrap { background: var(--indigo-600); color: white; padding: 0.375rem; border-radius: 0.5rem; margin-right: 0.5rem; animation: pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        .ai-icon-wrap svg { width: 1rem; height: 1rem; }
+        .ai-title h4 { color: var(--indigo-800); font-weight: 700; font-size: 1.125rem; letter-spacing: 0.05em; }
+        .ai-hint { color: rgba(49, 46, 129, 0.8); font-size: 0.875rem; background: rgba(255,255,255,0.6); padding: 0.75rem; border-radius: 0.25rem; border: 1px solid var(--indigo-100); margin-bottom: 1rem; position: relative; z-index: 1; }
+        .ai-hint-bold { font-weight: 700; margin-bottom: 0.25rem; }
+        
+        .btn-google { width: 100%; background: white; color: var(--indigo-600); font-weight: 700; padding: 0.75rem 1rem; border: 2px solid var(--indigo-200); border-radius: 0.5rem; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 0.5rem; transition: all 0.2s; position: relative; z-index: 1; font-family: inherit; font-size: 1rem; }
+        .btn-google:hover { background: var(--indigo-50); border-color: #818cf8; }
+        .btn-google svg { width: 1.25rem; height: 1.25rem; transition: transform 0.2s; }
+        .btn-google:hover svg { transform: scale(1.1); }
+
+        /* 歷史紀錄區塊 */
+        .history-card { position: sticky; top: 1.5rem; }
+        .history-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .btn-clear { background: none; border: none; color: var(--stone-400); font-size: 0.875rem; display: flex; align-items: center; cursor: pointer; transition: color 0.2s; font-family: inherit; }
+        .btn-clear:hover { color: var(--red-600); }
+        .btn-clear svg { width: 1rem; height: 1rem; margin-right: 0.25rem; }
+        
+        .history-list { max-height: calc(100vh - 200px); overflow-y: auto; padding-right: 0.25rem; display: flex; flex-direction: column; gap: 0.75rem; }
+        .history-empty { text-align: center; padding: 2rem 0; color: var(--stone-400); border: 2px dashed var(--stone-200); border-radius: 0.5rem; }
+        
+        .history-item { padding: 0.75rem; border-radius: 0.5rem; border: 1px solid var(--stone-200); background: white; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s; }
+        .history-item:hover { border-color: var(--red-300); background: var(--red-50); }
+        .hi-info { flex: 1; min-width: 0; }
+        .hi-tags { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem; flex-wrap: wrap; }
+        .hi-input { font-weight: 700; color: var(--stone-800); }
+        .hi-no { font-weight: 700; color: var(--red-800); font-size: 0.875rem; white-space: nowrap; }
+        .hi-note { color: var(--stone-600); font-size: 0.875rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .hi-time { font-size: 0.75rem; color: var(--stone-400); margin-top: 0.25rem; }
+        .hi-arrow { color: var(--stone-300); padding-left: 0.5rem; transition: color 0.2s; }
+        .history-item:hover .hi-arrow { color: var(--red-500); }
+
+        /* 自訂捲軸 */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+        
         @keyframes pulse-slow {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.7; }
         }
-        .animate-pulse-slow {
-            animation: pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
     </style>
 </head>
 <body>
-    <div id="root"></div>
+    <div class="container">
+        <header class="header">
+            <h1>孔明神數</h1>
+            <p>誠心誠意，有感必應</p>
+        </header>
 
-    <script type="text/babel">
-        const { useState, useEffect, useRef } = React;
+        <main class="main-grid">
+            <div class="left-col">
+                <section class="card card-p">
+                    <h2 class="card-title">
+                        <span class="step-badge">1</span>輸入求籤
+                    </h2>
+                    <form id="search-form">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="input-number">數字 (欄位 1)</label>
+                                <input type="number" id="input-number" class="form-input" placeholder="輸入任意數字..." autofocus>
+                                <p class="form-hint">*超過 384 自動扣除循環</p>
+                            </div>
+                            <div class="form-group">
+                                <label for="input-text">備註 (欄位 2)</label>
+                                <input type="text" id="input-text" class="form-input" placeholder="例如：事業、運勢...">
+                            </div>
+                        </div>
+                        
+                        <div id="error-msg" class="error-msg">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>
+                            </svg>
+                            <span id="error-text"></span>
+                        </div>
 
-        // --- 內建圖示組件 ---
-        const IconBase = ({ children, ...props }) => (
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-                {children}
-            </svg>
-        );
+                        <button type="submit" class="btn-submit">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                            </svg>
+                            送出求籤
+                        </button>
+                    </form>
+                </section>
 
-        const BookOpen = (props) => (
-            <IconBase {...props}>
-                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
-                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
-            </IconBase>
-        );
+                <section id="result-section" class="card"></section>
+            </div>
 
-        const ArrowRight = (props) => (
-            <IconBase {...props}>
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-                <polyline points="12 5 19 12 12 19"></polyline>
-            </IconBase>
-        );
+            <div>
+                <section class="card card-p history-card">
+                    <div class="history-header">
+                        <h2 class="card-title" style="margin: 0;">
+                            <span class="step-badge">3</span>歷史紀錄
+                        </h2>
+                        <button id="btn-clear" class="btn-clear" style="display: none;">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line>
+                            </svg>清空
+                        </button>
+                    </div>
+                    <div id="history-list" class="history-list custom-scrollbar">
+                        <div class="history-empty">尚無紀錄</div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
 
-        const AlertCircle = (props) => (
-            <IconBase {...props}>
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="8" x2="12" y2="12"></line>
-                <line x1="12" y1="16" x2="12.01" y2="16"></line>
-            </IconBase>
-        );
-
-        const Trash2 = (props) => (
-            <IconBase {...props}>
-                <polyline points="3 6 5 6 21 6"></polyline>
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                <line x1="10" y1="11" x2="10" y2="17"></line>
-                <line x1="14" y1="11" x2="14" y2="17"></line>
-            </IconBase>
-        );
-
-        const Search = (props) => (
-            <IconBase {...props}>
-                <circle cx="11" cy="11" r="8"></circle>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </IconBase>
-        );
-
-        const Sparkles = (props) => (
-             <IconBase {...props}>
-                <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .962 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .962L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.962 0z"></path>
-            </IconBase>
-        );
-
-        // --- 完整 384 籤資料庫 ---
+    <script>
+        // 資料庫初始化
         const rawPoems = [
             ["天門一掛榜，預定奪標人，馬嘶芳草地，秋高聽鹿鳴。", "大吉，事業、財運、健康、婚姻均順遂。", "見龍在田，利見大人。君子得之，終日乾乾。夕惕若，以是自強不息。居上不驕，在下不憂。大吉。"],
             ["地有神，甚威靈，興邦輔國，尊主庇民。", "神護籤，言行循規蹈矩，事業上必有貴人相助，婚姻得人，健康亦佳", "謀望一切，必可順遂。官吏有超遷之喜，士人有功名之慶。占前程者，福壽綿長；占事業者，根基牢固；惟求財無望。"],
@@ -493,7 +597,6 @@
             ["九華山頂，紫氣騰騰，異盡一舟，取去前行。", "得籤者可望取得通達之機緣，從此一帆風順。", "居高臨上，大事可成，有益無咎，無不中意，占之者定有前程。"]
         ];
 
-        // 數字轉中文數字 helper
         const toChineseNum = (num) => {
             const chars = ['○', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
             return num.toString().split('').map(d => chars[parseInt(d)]).join('');
@@ -501,311 +604,196 @@
 
         const generateTitle = (index) => {
             const numStr = toChineseNum(index);
-            // 補零邏輯: 1->○○一, 12->○一二, 123->一二三
             let padded = numStr;
             if (index < 10) padded = `○○${numStr}`;
             else if (index < 100) padded = `○${numStr}`;
             return `第${padded}籤`;
         };
 
-        const App = () => {
-            // 狀態管理
-            const [inputNumber, setInputNumber] = useState('');
-            const [inputText, setInputText] = useState('');
-            const [result, setResult] = useState(null);
-            const [history, setHistory] = useState([]);
-            // 生成完整資料庫
-            const [database] = useState(() => {
-                const fullData = [];
-                // 填入所有資料 (rawPoems)
-                rawPoems.forEach((item, idx) => {
-                    fullData.push({
-                        NO: (idx + 1).toString(),
-                        簽號: generateTitle(idx + 1),
-                        籤詩: item[0],
-                        解籤: item[1],
-                        演繹: item[2]
-                    });
-                });
-                return fullData;
-            });
-            
-            const [errorMsg, setErrorMsg] = useState('');
+        const database = rawPoems.map((item, idx) => ({
+            NO: (idx + 1).toString(),
+            簽號: generateTitle(idx + 1),
+            籤詩: item[0],
+            解籤: item[1],
+            演繹: item[2]
+        }));
 
-            // 計算邏輯
-            const calculateIndex = (num) => {
-                let n = parseInt(num, 10);
-                if (isNaN(n) || n <= 0) return null;
-                // 邏輯：超過 384 則扣除 384，直到範圍內 (即 Modulo運算)
-                // 公式：(n - 1) % 384 + 1 確保 384 整除時為 384 而不是 0
-                return ((n - 1) % 384) + 1;
-            };
+        // 狀態管理
+        let historyData = [];
+        let currentResult = null;
 
-            const handleSearch = (e) => {
-                e.preventDefault();
-                setErrorMsg('');
-                
-                if (!inputNumber) {
-                    setErrorMsg('請輸入數字');
-                    return;
-                }
+        // DOM 元素
+        const form = document.getElementById('search-form');
+        const inputNumber = document.getElementById('input-number');
+        const inputText = document.getElementById('input-text');
+        const errorMsg = document.getElementById('error-msg');
+        const errorText = document.getElementById('error-text');
+        const resultSection = document.getElementById('result-section');
+        const historyList = document.getElementById('history-list');
+        const btnClear = document.getElementById('btn-clear');
 
-                const targetIndex = calculateIndex(inputNumber);
-                
-                // 在資料庫中尋找對應的籤
-                // 注意：資料庫索引是 0-based，NO 是 1-based
-                const found = database[targetIndex - 1];
-
-                if (found) {
-                    const newResult = {
-                        originalInput: inputNumber,
-                        note: inputText,
-                        calculatedIndex: targetIndex,
-                        data: found,
-                        timestamp: new Date().toLocaleTimeString()
-                    };
-
-                    setResult(newResult);
-                    
-                    // 加入歷史紀錄 (新到舊)
-                    setHistory(prev => [newResult, ...prev]);
-                    
-                    // 清空輸入，但保留結果顯示
-                    setInputNumber('');
-                    setInputText('');
-                } else {
-                    setErrorMsg(`找不到第 ${targetIndex} 籤的資料。`);
-                }
-            };
-
-            const loadHistoryItem = (item) => {
-                setResult(item);
-                // 滾動到結果區塊
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            };
-
-            const clearHistory = () => {
-                if(confirm('確定要清除所有歷史紀錄嗎？')) {
-                    setHistory([]);
-                }
-            }
-            
-            // 處理 Google 搜尋
-            const handleGoogleSearch = () => {
-                if (result) {
-                    // 使用自然語言提問，較容易觸發 Google SGE (AI 概覽)
-                    const query = `請詳細解釋孔明神數${result.data.簽號}籤詩：「${result.data.籤詩}」的意思、白話文翻譯與人生寓意`;
-                    const url = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
-                    window.open(url, '_blank');
-                }
-            };
-
-            return (
-                <div className="min-h-screen pb-12 px-4 max-w-6xl mx-auto">
-                    
-                    {/* 標題區 */}
-                    <header className="py-8 text-center border-b-2 border-stone-200 mb-8">
-                        <h1 className="text-4xl font-bold text-stone-800 tracking-wider mb-2">孔明神數</h1>
-                        <p className="text-stone-500">誠心誠意，有感必應</p>
-                    </header>
-
-                    {/* 主要內容格線區 */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-                        
-                        {/* 左側欄位：輸入 + 結果顯示 (佔 2 欄) */}
-                        <div className="lg:col-span-2 space-y-8">
-                            
-                            {/* 區塊 1: 輸入 */}
-                            <section className="bg-white rounded-xl card-shadow p-6 border border-stone-100">
-                                <h2 className="text-xl font-bold text-stone-700 mb-4 flex items-center">
-                                    <span className="bg-red-800 text-white w-8 h-8 rounded-full flex items-center justify-center mr-2 text-sm">1</span>
-                                    輸入求籤
-                                </h2>
-                                <form onSubmit={handleSearch} className="space-y-4">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-stone-600 font-medium mb-1">數字 (欄位 1)</label>
-                                            <input 
-                                                type="number" 
-                                                value={inputNumber}
-                                                onChange={(e) => setInputNumber(e.target.value)}
-                                                placeholder="輸入任意數字..."
-                                                className="w-full p-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-red-800 focus:outline-none text-lg"
-                                                autoFocus
-                                            />
-                                            <p className="text-xs text-stone-400 mt-1">*超過 384 自動扣除循環</p>
-                                        </div>
-                                        <div>
-                                            <label className="block text-stone-600 font-medium mb-1">備註 (欄位 2)</label>
-                                            <input 
-                                                type="text" 
-                                                value={inputText}
-                                                onChange={(e) => setInputText(e.target.value)}
-                                                placeholder="例如：事業、運勢..."
-                                                className="w-full p-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-red-800 focus:outline-none text-lg"
-                                            />
-                                        </div>
-                                    </div>
-                                    
-                                    {errorMsg && (
-                                        <div className="bg-red-50 text-red-600 p-3 rounded-lg flex items-center text-sm">
-                                            <AlertCircle className="w-4 h-4 mr-2" />
-                                            {errorMsg}
-                                        </div>
-                                    )}
-
-                                    <button 
-                                        type="submit" 
-                                        className="w-full bg-red-800 hover:bg-red-900 text-white font-bold py-3 rounded-lg transition duration-200 flex items-center justify-center text-lg shadow-md"
-                                    >
-                                        <BookOpen className="w-5 h-5 mr-2" />
-                                        送出求籤
-                                    </button>
-                                </form>
-                            </section>
-
-                            {/* 區塊 2: 結果顯示 */}
-                            {result && (
-                                <section className="bg-white rounded-xl card-shadow overflow-hidden border border-red-100 relative">
-                                    <div className="bg-red-50 p-4 border-b border-red-100 flex justify-between items-center">
-                                        <h2 className="text-xl font-bold text-red-900 flex items-center">
-                                            <span className="bg-red-800 text-white w-8 h-8 rounded-full flex items-center justify-center mr-2 text-sm">2</span>
-                                            籤詩結果
-                                        </h2>
-                                        <div className="text-right text-sm text-red-800 opacity-70">
-                                            <div className="font-bold">輸入: {result.originalInput}</div>
-                                            <div>求問: {result.note || '無'}</div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div className="p-6 md:p-8 space-y-6">
-                                        {/* 1) 籤號 */}
-                                        <div className="text-center">
-                                            <span className="inline-block bg-stone-800 text-amber-400 px-4 py-1 rounded-full text-sm font-bold tracking-widest mb-2">
-                                                NO. {result.calculatedIndex}
-                                            </span>
-                                            <h3 className="text-3xl font-bold text-stone-800">{result.data.簽號}</h3>
-                                        </div>
-
-                                        <div className="grid gap-6">
-                                            {/* 2) 籤詩 */}
-                                            <div className="bg-stone-50 p-5 rounded-lg border-l-4 border-stone-400">
-                                                <h4 className="text-stone-500 font-bold text-sm mb-2 uppercase tracking-wide">籤詩</h4>
-                                                <p className="text-xl text-stone-800 leading-loose font-serif font-medium">
-                                                    {result.data.籤詩}
-                                                </p>
-                                            </div>
-
-                                            {/* 3) 解籤 */}
-                                            <div className="bg-red-50 p-5 rounded-lg border-l-4 border-red-400">
-                                                <h4 className="text-red-500 font-bold text-sm mb-2 uppercase tracking-wide">解籤</h4>
-                                                <p className="text-lg text-stone-800 leading-relaxed">
-                                                    {result.data.解籤}
-                                                </p>
-                                            </div>
-
-                                            {/* 4) 演繹 */}
-                                            <div className="bg-amber-50 p-5 rounded-lg border-l-4 border-amber-400">
-                                                <h4 className="text-amber-600 font-bold text-sm mb-2 uppercase tracking-wide">演繹</h4>
-                                                <p className="text-lg text-stone-800 leading-relaxed">
-                                                    {result.data.演繹}
-                                                </p>
-                                            </div>
-
-                                            {/* 5) 新增：網路/AI 詳解區塊 */}
-                                            <div className="bg-gradient-to-r from-indigo-50 to-blue-50 p-6 rounded-lg border border-indigo-200 shadow-sm relative overflow-hidden">
-                                                <div className="absolute top-0 right-0 -mt-2 -mr-2 opacity-10 text-indigo-500">
-                                                    <Sparkles width="100" height="100" />
-                                                </div>
-                                                
-                                                <div className="flex items-center mb-3">
-                                                    <div className="bg-indigo-600 text-white p-1.5 rounded-lg mr-2 animate-pulse-slow">
-                                                        <Sparkles className="w-4 h-4" />
-                                                    </div>
-                                                    <h4 className="text-indigo-800 font-bold text-lg tracking-wide">
-                                                        Google AI / 網路詳解
-                                                    </h4>
-                                                </div>
-                                                
-                                                <div className="text-indigo-900/80 text-sm mb-4 leading-relaxed bg-white/60 p-3 rounded border border-indigo-100">
-                                                    <p className="font-bold mb-1">💡 提示：</p>
-                                                    <p>想知道更白話的解釋、道德寓意或現代應用嗎？</p>
-                                                    <p>點擊下方按鈕，即可透過 Google (含 AI 概覽) 查詢此籤詩的詳細解析。</p>
-                                                </div>
-                                                
-                                                <button 
-                                                    onClick={handleGoogleSearch}
-                                                    className="w-full bg-white hover:bg-indigo-50 text-indigo-600 font-bold py-3 px-4 border-2 border-indigo-200 hover:border-indigo-400 rounded-lg transition duration-200 flex items-center justify-center gap-2 group shadow-sm"
-                                                >
-                                                    <Search className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                                                    <span>Google AI 智能詳解 (搜尋)</span>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </section>
-                            )}
-
-                        </div>
-
-                        {/* 右側欄位：歷史紀錄 (佔 1 欄) */}
-                        <div className="lg:col-span-1">
-                            {/* 區塊 3: 歷史紀錄 */}
-                            <section className="bg-white rounded-xl card-shadow p-6 border border-stone-100 sticky top-6">
-                                <div className="flex justify-between items-center mb-4">
-                                    <h2 className="text-xl font-bold text-stone-700 flex items-center">
-                                        <span className="bg-red-800 text-white w-8 h-8 rounded-full flex items-center justify-center mr-2 text-sm">3</span>
-                                        歷史紀錄
-                                    </h2>
-                                    {history.length > 0 && (
-                                        <button 
-                                            onClick={clearHistory}
-                                            className="text-stone-400 hover:text-red-600 text-sm flex items-center transition"
-                                        >
-                                            <Trash2 className="w-4 h-4 mr-1" /> 清空
-                                        </button>
-                                    )}
-                                </div>
-
-                                <div className="space-y-3 max-h-[calc(100vh-200px)] overflow-y-auto custom-scrollbar pr-1">
-                                    {history.length === 0 ? (
-                                        <div className="text-center py-8 text-stone-400 border-2 border-dashed border-stone-200 rounded-lg">
-                                            尚無紀錄
-                                        </div>
-                                    ) : (
-                                        history.map((item, index) => (
-                                            <div 
-                                                key={index}
-                                                onClick={() => loadHistoryItem(item)}
-                                                className="group cursor-pointer p-3 rounded-lg border border-stone-200 hover:border-red-300 hover:bg-red-50 transition duration-200 flex justify-between items-center bg-white"
-                                            >
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                                        <span className="font-bold text-stone-800 text-md">#{item.originalInput}</span>
-                                                        <span className="font-bold text-red-800 text-sm whitespace-nowrap">籤 {item.calculatedIndex}</span>
-                                                    </div>
-                                                    <div className="text-stone-600 text-sm truncate">
-                                                        {item.note || "（無備註）"}
-                                                    </div>
-                                                    <div className="text-xs text-stone-400 mt-1">{item.timestamp}</div>
-                                                </div>
-                                                <div className="text-stone-300 group-hover:text-red-500 pl-2">
-                                                    <ArrowRight className="w-4 h-4" />
-                                                </div>
-                                            </div>
-                                        ))
-                                    )}
-                                </div>
-                            </section>
-                        </div>
-
-                    </div>
-                </div>
-            );
+        // 計算邏輯
+        const calculateIndex = (num) => {
+            let n = parseInt(num, 10);
+            if (isNaN(n) || n <= 0) return null;
+            return ((n - 1) % 384) + 1;
         };
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+        const showError = (msg) => {
+            errorText.textContent = msg;
+            errorMsg.style.display = 'flex';
+        };
+
+        const hideError = () => {
+            errorMsg.style.display = 'none';
+        };
+
+        // 繪製結果
+        const renderResult = (result) => {
+            resultSection.innerHTML = `
+                <div class="result-header">
+                    <h2><span class="step-badge">2</span>籤詩結果</h2>
+                    <div class="result-meta">
+                        <div class="result-meta-bold">輸入: ${result.originalInput}</div>
+                        <div>求問: ${result.note || '無'}</div>
+                    </div>
+                </div>
+                <div class="result-body">
+                    <div class="poem-title-area">
+                        <span class="poem-no">NO. ${result.calculatedIndex}</span>
+                        <h3 class="poem-title">${result.data.簽號}</h3>
+                    </div>
+                    
+                    <div class="content-box box-poem">
+                        <h4 class="box-title">籤詩</h4>
+                        <p>${result.data.籤詩}</p>
+                    </div>
+                    
+                    <div class="content-box box-explain">
+                        <h4 class="box-title">解籤</h4>
+                        <p>${result.data.解籤}</p>
+                    </div>
+                    
+                    <div class="content-box box-deduce">
+                        <h4 class="box-title">演繹</h4>
+                        <p>${result.data.演繹}</p>
+                    </div>
+
+                    <div class="ai-box">
+                        <svg class="ai-bg-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .962 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .962L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.962 0z"></path>
+                        </svg>
+                        <div class="ai-title">
+                            <div class="ai-icon-wrap">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .962 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .962L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.962 0z"></path>
+                                </svg>
+                            </div>
+                            <h4>Google AI / 網路詳解</h4>
+                        </div>
+                        <div class="ai-hint">
+                            <p class="ai-hint-bold">💡 提示：</p>
+                            <p>想知道更白話的解釋、道德寓意或現代應用嗎？<br>點擊下方按鈕，即可透過 Google (含 AI 概覽) 查詢此籤詩的詳細解析。</p>
+                        </div>
+                        <button type="button" class="btn-google" id="btn-google-search">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            </svg>
+                            <span>Google AI 智能詳解 (搜尋)</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            resultSection.style.display = 'block';
+
+            // 綁定 Google 搜尋按鈕事件
+            document.getElementById('btn-google-search').addEventListener('click', () => {
+                const query = `請詳細解釋孔明神數${result.data.簽號}籤詩：「${result.data.籤詩}」的意思、白話文翻譯與人生寓意`;
+                window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, '_blank');
+            });
+        };
+
+        // 更新歷史紀錄 UI
+        const renderHistory = () => {
+            if (historyData.length === 0) {
+                historyList.innerHTML = `<div class="history-empty">尚無紀錄</div>`;
+                btnClear.style.display = 'none';
+                return;
+            }
+            
+            btnClear.style.display = 'flex';
+            historyList.innerHTML = historyData.map((item, index) => `
+                <div class="history-item" onclick="loadHistoryItem(${index})">
+                    <div class="hi-info">
+                        <div class="hi-tags">
+                            <span class="hi-input">#${item.originalInput}</span>
+                            <span class="hi-no">籤 ${item.calculatedIndex}</span>
+                        </div>
+                        <div class="hi-note">${item.note || "（無備註）"}</div>
+                        <div class="hi-time">${item.timestamp}</div>
+                    </div>
+                    <div class="hi-arrow">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </div>
+                </div>
+            `).join('');
+        };
+
+        // 載入特定歷史紀錄
+        window.loadHistoryItem = (index) => {
+            currentResult = historyData[index];
+            renderResult(currentResult);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        // 表單提交事件
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            hideError();
+            
+            const numVal = inputNumber.value;
+            const textVal = inputText.value;
+
+            if (!numVal) {
+                showError('請輸入數字');
+                return;
+            }
+
+            const targetIndex = calculateIndex(numVal);
+            const found = database[targetIndex - 1];
+
+            if (found) {
+                const newResult = {
+                    originalInput: numVal,
+                    note: textVal,
+                    calculatedIndex: targetIndex,
+                    data: found,
+                    timestamp: new Date().toLocaleTimeString()
+                };
+
+                currentResult = newResult;
+                historyData = [newResult, ...historyData]; // 新增至最前面
+                
+                renderResult(currentResult);
+                renderHistory();
+                
+                inputNumber.value = '';
+                inputText.value = '';
+            } else {
+                showError(`找不到第 ${targetIndex} 籤的資料。`);
+            }
+        });
+
+        // 清除歷史紀錄
+        btnClear.addEventListener('click', () => {
+            if(confirm('確定要清除所有歷史紀錄嗎？')) {
+                historyData = [];
+                renderHistory();
+            }
+        });
     </script>
 </body>
 </html>
